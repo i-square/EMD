@@ -29,7 +29,7 @@
 #include <complex>
 #include <algorithm>
 
-#include "emd.h"
+#include "emd.hpp"
 
 // external libraries
 #include <edflib.h>
