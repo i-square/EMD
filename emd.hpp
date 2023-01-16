@@ -1,6 +1,15 @@
 #ifndef EMD_H
 #define EMD_H
 
+#include <vector>
+#include <limits>
+#include <cassert>
+#include <cmath>
+#include <functional>
+#include <type_traits>
+#include <complex>
+#include <algorithm>
+
 //
 // Find local maxima in a series of points, sorted by x-value.  The return
 // value is a pair, with the first element containing the x-values of the

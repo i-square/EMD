@@ -16,20 +16,13 @@
 //    You should have received a copy of the GNU General Public License
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+#include "emd.hpp"
+
 #include <iostream>
 #include <fstream>
 #include <iomanip>
-#include <vector>
-#include <limits>
-#include <cassert>
 #include <cmath>
 #include <sstream>
-#include <functional>
-#include <type_traits>
-#include <complex>
-#include <algorithm>
-
-#include "emd.hpp"
 
 // external libraries
 #include <edflib.h>
