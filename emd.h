@@ -12,14 +12,20 @@
 //
 
 // iterator version of interface
-template <typename IterX, typename IterY,
-        typename IterXOut, typename IterYOut,
-        typename Compare =
-            std::greater<typename std::iterator_traits<IterY>::value_type>>
-std::pair<IterXOut, IterYOut>
-find_local_maxima(IterX xbegin, IterX xend, IterY ybegin, IterY yend,
-    IterXOut xout, IterYOut yout, Compare compare = Compare{}) {
-
+template <
+        typename IterX,
+        typename IterY,
+        typename IterXOut,
+        typename IterYOut,
+        typename Compare = std::greater<typename std::iterator_traits<IterY>::value_type>>
+std::pair<IterXOut, IterYOut> find_local_maxima(
+        IterX xbegin,
+        IterX xend,
+        IterY ybegin,
+        IterY yend,
+        IterXOut xout,
+        IterYOut yout,
+        Compare compare = Compare{}) {
     // define names for the types of the X and Y values
     using XType = typename std::iterator_traits<IterX>::value_type;
     using YType = typename std::iterator_traits<IterY>::value_type;
@@ -60,12 +66,9 @@ find_local_maxima(IterX xbegin, IterX xend, IterY ybegin, IterY yend,
 }
 
 // container version of interface
-template <typename Xs, typename Ys,
-        typename Compare = std::greater<typename Ys::value_type>>
-std::pair<std::vector<typename Xs::value_type>,
-        std::vector<typename Ys::value_type>>
+template <typename Xs, typename Ys, typename Compare = std::greater<typename Ys::value_type>>
+std::pair<std::vector<typename Xs::value_type>, std::vector<typename Ys::value_type>>
 find_local_maxima(const Xs& xs, const Ys& ys, Compare compare = Compare{}) {
-
     // confirm that the x and y lists are of the same length
     assert(xs.size() == ys.size());
 
@@ -74,13 +77,18 @@ find_local_maxima(const Xs& xs, const Ys& ys, Compare compare = Compare{}) {
     std::vector<typename Ys::value_type> extrema_ys;
 
     // use the iterator version to find the maxima
-    find_local_maxima(begin(xs), end(xs), begin(ys), end(ys),
-            back_inserter(extrema_xs), back_inserter(extrema_ys), compare);
+    find_local_maxima(
+            begin(xs),
+            end(xs),
+            begin(ys),
+            end(ys),
+            back_inserter(extrema_xs),
+            back_inserter(extrema_ys),
+            compare);
 
     // return the results, using move to avoid an extra copy.
     return std::make_pair(std::move(extrema_xs), std::move(extrema_ys));
 }
-
 
 //
 // Calculate a cubic spline through the given data points using the "natural"
@@ -89,12 +97,12 @@ find_local_maxima(const Xs& xs, const Ys& ys, Compare compare = Compare{}) {
 //
 
 template <typename Old_Xs, typename Ys, typename New_Xs>
-std::vector<typename Ys::value_type>
-cubic_spline_interpolate(const Old_Xs& old_xs, const Ys& old_ys,
+std::vector<typename Ys::value_type> cubic_spline_interpolate(
+        const Old_Xs& old_xs,
+        const Ys& old_ys,
         const New_Xs& new_xs) {
-
     using Y_Val = typename Ys::value_type;
-    std::vector<Y_Val> new_ys {};
+    std::vector<Y_Val> new_ys{};
     new_ys.reserve(new_xs.size());
 
     assert(old_xs.size() > 0);
@@ -102,7 +110,7 @@ cubic_spline_interpolate(const Old_Xs& old_xs, const Ys& old_ys,
     if (old_xs.size() == 1) {
         new_ys.assign(new_xs.size(), old_ys.front());
     } else {
-        std::vector<Y_Val> d2ys {}; // second derivative of old_ys
+        std::vector<Y_Val> d2ys{};  // second derivative of old_ys
         d2ys.reserve(new_xs.size());
         auto dx_begin = old_xs[1] - old_xs[0];
         auto dx_end = old_xs.back() - old_xs[old_xs.size() - 2];
@@ -116,14 +124,12 @@ cubic_spline_interpolate(const Old_Xs& old_xs, const Ys& old_ys,
         if (old_xs.size() == 3) {
             // special case when the second data point is also the second to
             // last data point.
-            d2ys.push_back(
-                3*(dy_end/dx_end - dy_begin/dx_begin)/(dx_end + dx_begin)
-            );
+            d2ys.push_back(3 * (dy_end / dx_end - dy_begin / dx_begin) / (dx_end + dx_begin));
         } else if (old_xs.size() > 3) {
             // we need to solve a tridiagonal system to find the y'' values
-            std::vector<Y_Val> diag {};
-            std::vector<Y_Val> off_diag {};
-            std::vector<Y_Val> rhs {};
+            std::vector<Y_Val> diag{};
+            std::vector<Y_Val> off_diag{};
+            std::vector<Y_Val> rhs{};
             diag.reserve(old_xs.size() - 2);
             off_diag.reserve(old_xs.size() - 3);
             rhs.reserve(old_xs.size() - 2);
@@ -131,36 +137,36 @@ cubic_spline_interpolate(const Old_Xs& old_xs, const Ys& old_ys,
             // calculate the diagonal, off-diagonal, and rhs of the
             // linear system
             for (size_t i = 1; i < old_xs.size() - 1; ++i) {
-                auto dx_m = old_xs[i] - old_xs[i-1];
-                auto dx_p = old_xs[i+1] - old_xs[i];
-                auto dy_m = old_ys[i] - old_ys[i-1];
-                auto dy_p = old_ys[i+1] - old_ys[i];
+                auto dx_m = old_xs[i] - old_xs[i - 1];
+                auto dx_p = old_xs[i + 1] - old_xs[i];
+                auto dy_m = old_ys[i] - old_ys[i - 1];
+                auto dy_p = old_ys[i + 1] - old_ys[i];
 
-                diag.push_back((dx_p + dx_m)/3);
-                rhs.push_back(dy_p/dx_p - dy_m/dx_m);
+                diag.push_back((dx_p + dx_m) / 3);
+                rhs.push_back(dy_p / dx_p - dy_m / dx_m);
 
                 // off-diagonal is one shorter than the diagonal and rhs
                 if (i < old_xs.size() - 2) {
-                    off_diag.push_back(dx_p/6);
+                    off_diag.push_back(dx_p / 6);
                 }
             }
 
             // do the forward substitution pass
             for (size_t i = 1; i < rhs.size(); ++i) {
-                auto q = off_diag[i-1]/diag[i-1];
-                diag[i] -= q*off_diag[i-1];
-                rhs[i] -= q*rhs[i-1];
+                auto q = off_diag[i - 1] / diag[i - 1];
+                diag[i] -= q * off_diag[i - 1];
+                rhs[i] -= q * rhs[i - 1];
             }
 
             // do the backwards substitution
             for (size_t i = rhs.size() - 2; i != (size_t(0) - 1); --i) {
-                auto q = off_diag[i]/diag[i+1];
-                rhs[i] -= q*rhs[i+1];
+                auto q = off_diag[i] / diag[i + 1];
+                rhs[i] -= q * rhs[i + 1];
             }
 
             // store the d2ys
             for (size_t i = 0; i < rhs.size(); ++i) {
-                d2ys.push_back(rhs[i]/diag[i]);
+                d2ys.push_back(rhs[i] / diag[i]);
             }
         }
 
@@ -176,11 +182,8 @@ cubic_spline_interpolate(const Old_Xs& old_xs, const Ys& old_ys,
 
         // first handle the extrapolated points at the beginning
         while (i_new_x != new_xs.end() && *i_new_x <= *i_old_x) {
-            auto slope_begin = dy_begin/dx_begin -
-                dx_begin*(d2ys.front()/3 + d2ys[1]/6);
-            new_ys.push_back(
-                old_ys.front() + slope_begin * (*i_new_x - old_xs.front())
-            );
+            auto slope_begin = dy_begin / dx_begin - dx_begin * (d2ys.front() / 3 + d2ys[1] / 6);
+            new_ys.push_back(old_ys.front() + slope_begin * (*i_new_x - old_xs.front()));
             ++i_new_x;
         }
         // next handle the interpolated points in the middle
@@ -192,7 +195,7 @@ cubic_spline_interpolate(const Old_Xs& old_xs, const Ys& old_ys,
                 ++i_d2y;
             }
             if (i_old_x == old_xs.end()) {
-                break; // we're done interpolating (and need to extrapolate)
+                break;  // we're done interpolating (and need to extrapolate)
             }
 
             auto dx = *i_old_x - *(i_old_x - 1);
@@ -200,26 +203,22 @@ cubic_spline_interpolate(const Old_Xs& old_xs, const Ys& old_ys,
             auto v = 1 - u;
 
             new_ys.push_back(
-                *(i_old_y-1)*u + *i_old_y*v +
-                    *(i_d2y - 1) * (u*u*u - u)*dx*dx/6 +
-                    *i_d2y * (v*v*v - v)*dx*dx/6
-            );
+                    *(i_old_y - 1) * u + *i_old_y * v +
+                    *(i_d2y - 1) * (u * u * u - u) * dx * dx / 6 +
+                    *i_d2y * (v * v * v - v) * dx * dx / 6);
             ++i_new_x;
         }
         // finally, handle the extrapolated points at the end
         while (i_new_x != new_xs.end()) {
-            auto slope_end = dy_end/dx_end +
-                dx_end*(d2ys[d2ys.size() - 2]/6 + d2ys.back()/3);
-            new_ys.push_back(
-                old_ys.back() + slope_end * (*i_new_x - old_xs.back())
-            );
+            auto slope_end =
+                    dy_end / dx_end + dx_end * (d2ys[d2ys.size() - 2] / 6 + d2ys.back() / 3);
+            new_ys.push_back(old_ys.back() + slope_end * (*i_new_x - old_xs.back()));
             ++i_new_x;
         }
     }
 
     return std::move(new_ys);
 }
-
 
 //
 // Perform a single sifting pass of the empiric mode decomposition as
@@ -231,8 +230,7 @@ cubic_spline_interpolate(const Old_Xs& old_xs, const Ys& old_ys,
 // sifting process is aborted and an empty list is returned.
 //
 template <typename Xs, typename Ys>
-std::vector<typename Ys::value_type>
-sift(const Xs& xs, const Ys& ys) {
+std::vector<typename Ys::value_type> sift(const Xs& xs, const Ys& ys) {
     std::vector<typename Ys::value_type> result;
     result.reserve(ys.size());
 
@@ -244,13 +242,46 @@ sift(const Xs& xs, const Ys& ys) {
         return result;
     }
 
-    auto upper_envelope = cubic_spline_interpolate(maxima.first,
-        maxima.second, xs);
-    auto lower_envelope = cubic_spline_interpolate(minima.first,
-        minima.second, xs);
+    auto upper_envelope = cubic_spline_interpolate(maxima.first, maxima.second, xs);
+    auto lower_envelope = cubic_spline_interpolate(minima.first, minima.second, xs);
 
     for (size_t i = 0; i < upper_envelope.size(); ++i) {
-        result.push_back(ys[i] - (upper_envelope[i] + lower_envelope[i])/2);
+        result.push_back(ys[i] - (upper_envelope[i] + lower_envelope[i]) / 2);
+    }
+
+    return std::move(result);
+}
+
+//
+// Perform a single sifting pass of the empiric mode decomposition as
+// described by Huang et al 1998.  This is performed by fitting a cubic
+// spline through the local minima and maxima, then subtracting the mean of
+// these two cubic splines from the original data.
+//
+// If the data contain no local maxima or they contain no local minima, the
+// sifting process is aborted and an empty list is returned.
+//
+template <typename Xs, typename Ys>
+std::vector<typename Ys::value_type> sift_with_extrema(
+        const Xs& xs,
+        const Ys& ys,
+        const std::pair<std::vector<typename Xs::value_type>, std::vector<typename Ys::value_type>>&
+                maxima,
+        const std::pair<std::vector<typename Xs::value_type>, std::vector<typename Ys::value_type>>&
+                minima) {
+    std::vector<typename Ys::value_type> result;
+    if (maxima.first.size() < 4 || minima.first.size() < 4) {
+        // no extrema - can't sift.
+        return result;
+    }
+
+    result.reserve(ys.size());
+
+    auto upper_envelope = cubic_spline_interpolate(maxima.first, maxima.second, xs);
+    auto lower_envelope = cubic_spline_interpolate(minima.first, minima.second, xs);
+
+    for (size_t i = 0; i < upper_envelope.size(); ++i) {
+        result.push_back(ys[i] - (upper_envelope[i] + lower_envelope[i]) / 2);
     }
 
     return std::move(result);
@@ -270,8 +301,7 @@ sift(const Xs& xs, const Ys& ys) {
 // typical for a "standard deviation".
 //
 template <typename T1, typename T2>
-typename T1::value_type
-sifting_difference(const T1& old_vals, const T2& new_vals) {
+typename T1::value_type sifting_difference(const T1& old_vals, const T2& new_vals) {
     typename T1::value_type sum = 0;
 
     assert(old_vals.size() == new_vals.size());
@@ -285,13 +315,23 @@ sifting_difference(const T1& old_vals, const T2& new_vals) {
     return sqrt(sum / old_vals.size());
 }
 
+template <typename Ys>
+typename Ys::value_type abs_sum(const Ys& ys) {
+    typename Ys::value_type sum = 0;
+    for (auto& v : ys) {
+        sum += std::abs(v);
+    }
+    return sum;
+}
 
 //
 // Calculate the empirical mode decomposition of a time series.
 //
 template <typename Xs, typename Ys>
-std::vector<std::vector<typename Ys::value_type>>
-empirical_mode_decomposition(const Xs& xs, const Ys& ys, unsigned max_siftings = 50) {
+std::vector<std::vector<typename Ys::value_type>> empirical_mode_decomposition(
+        const Xs& xs,
+        const Ys& ys,
+        unsigned max_siftings = 1000) {
     using Y_Val = typename Ys::value_type;
     using Imf = std::vector<Y_Val>;
 
@@ -303,26 +343,35 @@ empirical_mode_decomposition(const Xs& xs, const Ys& ys, unsigned max_siftings =
     residual.assign(begin(ys), end(ys));
 
     while (true) {
-        auto sifted = sift(xs, residual);
+        // iterate the sifting process until we reach a stopping condition
+        size_t num_siftings = 0;
+        Imf imf = residual;
 
-        // stop when we can't sift any more
-        if (sifted.size() == 0) {
+        auto sum = abs_sum(imf);
+        // printf("cur imf abs_sum: %f\n", sum);
+        if (sum < 1e-8) {
+            // can't sift anymore
             break;
         }
 
-        // iterate the sifting process until we reach a stopping condition
-        size_t num_siftings=0;
-        Imf imf {residual};
-        std::cout << "  computing IMF " << result.size() + 1 << std::flush;
-        while ((max_siftings == 0 || num_siftings < max_siftings) &&
-                sifted.size() > 0 && sifting_difference(imf, sifted) > 0.2) {
-            ++num_siftings;
-            std::cout << "." << std::flush;
-            imf = std::move(sifted);
-            sifted = sift(xs, imf);
-        }
-        std::cout << "\n";
+        while ((max_siftings == 0) || (num_siftings < max_siftings)) {
+            auto maxima = find_local_maxima(xs, imf);
+            auto minima = find_local_maxima(xs, imf, std::less<typename Ys::value_type>{});
+            // printf("max: %d min: %d\n", maxima.first.size(), minima.first.size());
+            if (maxima.first.size() < 4 || minima.first.size() < 4) {
+                // can't fit splines
+                break;
+            }
 
+            auto sifted = sift_with_extrema(xs, imf, maxima, minima);
+            if (sifting_difference(imf, sifted) < 0.02) {
+                break;
+            }
+
+            ++num_siftings;
+
+            imf = std::move(sifted);
+        }
         // subtract out the imf from the residual
         for (size_t i = 0; i < residual.size(); ++i) {
             residual[i] -= imf[i];
@@ -331,8 +380,21 @@ empirical_mode_decomposition(const Xs& xs, const Ys& ys, unsigned max_siftings =
         result.push_back(imf);
     }
 
-    result.push_back(residual);
     return std::move(result);
+}
+
+//
+// Calculate the empirical mode decomposition of a time series.
+//
+template <typename Ys>
+std::vector<std::vector<typename Ys::value_type>> empirical_mode_decomposition(
+        const Ys& ys,
+        unsigned max_siftings = 1000) {
+    std::vector<typename Ys::value_type> xs;
+    for (size_t i = 0; i < ys.size(); ++i) {
+        xs.push_back(1 * i);
+    }
+    return empirical_mode_decomposition(xs, ys, max_siftings);
 }
 
 //
@@ -345,23 +407,21 @@ T reverse_n_bits(T val, unsigned word_length) {
 
     // proposed word length should fit the type being used
     // (note: the size of the type must fit the next largest power of 2 bits)
-    assert((sizeof(u) >= 8 && word_length <= 64) ||
-            (sizeof(u) >= 4 && word_length <= 32) ||
-            (sizeof(u) >= 2 && word_length <= 16) ||
-            word_length <= 8);
+    assert((sizeof(u) >= 8 && word_length <= 64) || (sizeof(u) >= 4 && word_length <= 32) ||
+           (sizeof(u) >= 2 && word_length <= 16) || word_length <= 8);
 
     // we don'u support word lengths over 64 bits at the moment
     assert(word_length <= 64);
 
     // first swap adjacent bits...
     u = ((u & static_cast<U>(0xAAAAAAAAAAAAAAAAULL)) >> 1) +
-        ((u & static_cast<U>(0x5555555555555555ULL)) << 1);
+            ((u & static_cast<U>(0x5555555555555555ULL)) << 1);
     // ...then adjacent pairs of bits...
     u = ((u & static_cast<U>(0xCCCCCCCCCCCCCCCCULL)) >> 2) +
-        ((u & static_cast<U>(0x3333333333333333ULL)) << 2);
+            ((u & static_cast<U>(0x3333333333333333ULL)) << 2);
     // ...then adjacent nibbles...
     u = ((u & static_cast<U>(0xF0F0F0F0F0F0F0F0ULL)) >> 4) +
-        ((u & static_cast<U>(0x0F0F0F0F0F0F0F0FULL)) << 4);
+            ((u & static_cast<U>(0x0F0F0F0F0F0F0F0FULL)) << 4);
 
     if (sizeof(u) == 1) {
         return u >> (8 - word_length);
@@ -369,7 +429,7 @@ T reverse_n_bits(T val, unsigned word_length) {
 
     // ...then adjacent bytes...
     u = ((u & static_cast<U>(0xFF00FF00FF00FF00ULL)) >> 8) +
-        ((u & static_cast<U>(0x00FF00FF00FF00FFULL)) << 8);
+            ((u & static_cast<U>(0x00FF00FF00FF00FFULL)) << 8);
 
     if (sizeof(u) == 2) {
         return u >> (16 - word_length);
@@ -377,7 +437,7 @@ T reverse_n_bits(T val, unsigned word_length) {
 
     // ...then adjacent words...
     u = ((u & static_cast<U>(0xFFFF0000FFFF0000ULL)) >> 16) +
-        ((u & static_cast<U>(0x0000FFFF0000FFFFULL)) << 16);
+            ((u & static_cast<U>(0x0000FFFF0000FFFFULL)) << 16);
 
     if (sizeof(u) == 4) {
         return u >> (32 - word_length);
@@ -387,12 +447,11 @@ T reverse_n_bits(T val, unsigned word_length) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wshift-count-overflow"
     u = ((u & static_cast<U>(0xFFFFFFFF00000000ULL)) >> 32) +
-        ((u & static_cast<U>(0x00000000FFFFFFFFULL)) << 32);
+            ((u & static_cast<U>(0x00000000FFFFFFFFULL)) << 32);
 #pragma GCC diagnostic pop
 
     return u >> (64 - word_length);
 }
-
 
 //
 // creates a copy of the list where the elements have been shuffled to be
@@ -400,9 +459,8 @@ T reverse_n_bits(T val, unsigned word_length) {
 // The original data is zero-padded as needed to make its length a power
 // of 2.
 //
-template <typename C, typename T=typename C::value_type>
-std::vector<T>
-bit_reverse_copy(const C& c) {
+template <typename C, typename T = typename C::value_type>
+std::vector<T> bit_reverse_copy(const C& c) {
     unsigned num_address_bits = 0;
     while ((1U << num_address_bits) < c.size()) {
         ++num_address_bits;
@@ -434,27 +492,26 @@ struct make_complex<std::complex<S>> {
 // (do not call directly).
 //
 template <typename C, typename T, bool inverse>
-std::vector<T>
-fft_core(const C& c) {
+std::vector<T> fft_core(const C& c) {
     const auto pi = 2 * std::arg(T{0., 1.});
 
-    std::vector<T> result = bit_reverse_copy<C,T>(c);
+    std::vector<T> result = bit_reverse_copy<C, T>(c);
 
-    size_t n {result.size()};
+    size_t n{result.size()};
     size_t log_2_n;
-    for (log_2_n = 0; (1U << log_2_n) < n; ++log_2_n) {};
+    for (log_2_n = 0; (1U << log_2_n) < n; ++log_2_n) {
+    };
 
     for (size_t s = 1; s <= log_2_n; ++s) {
-        size_t m {size_t{1} << s};
-        T omega_m = std::polar<typename T::value_type>(1.,
-            (inverse ? 2 : -2)*pi/m);
+        size_t m{size_t{1} << s};
+        T omega_m = std::polar<typename T::value_type>(1., (inverse ? 2 : -2) * pi / m);
         for (size_t k = 0; k < n; k += m) {
             T omega = 1;
-            for (size_t j = 0; j < m/2; ++j) {
-                T t = omega * result[k + j + m/2];
+            for (size_t j = 0; j < m / 2; ++j) {
+                T t = omega * result[k + j + m / 2];
                 T u = result[k + j];
                 result[k + j] = u + t;
-                result[k + j + m/2] = u - t;
+                result[k + j + m / 2] = u - t;
                 omega *= omega_m;
             }
         }
@@ -469,46 +526,37 @@ fft_core(const C& c) {
     return std::move(result);
 }
 
-
 //
 // Compute the fast Fourier transform of time series data, zero padding as
 // needed to make the length of the data set a power of two.
 //
-template <typename C,
-         typename T=typename make_complex<typename C::value_type>::type>
-std::vector<T>
-fft(const C& c) {
-    return fft_core<C,T,false>(c);
+template <typename C, typename T = typename make_complex<typename C::value_type>::type>
+std::vector<T> fft(const C& c) {
+    return fft_core<C, T, false>(c);
 }
-
 
 //
 // Compute the inverse fast Fourier transform.
 //
-template <typename C,
-         typename T=typename make_complex<typename C::value_type>::type>
-std::vector<T>
-ifft(const C& c) {
-    return fft_core<C,T,true>(c);
+template <typename C, typename T = typename make_complex<typename C::value_type>::type>
+std::vector<T> ifft(const C& c) {
+    return fft_core<C, T, true>(c);
 }
-
 
 //
 // Calculate the analytic representation of a time series (by adding i times
 // the Hilbert transform of the time series).
 //
-template <typename Ys,
-         typename T=typename make_complex<typename Ys::value_type>::type>
-std::vector<T>
-analytic_representation(const Ys& ys) {
+template <typename Ys, typename T = typename make_complex<typename Ys::value_type>::type>
+std::vector<T> analytic_representation(const Ys& ys) {
     auto ws = fft(ys);
 
     // multiply the positive frequencies by two and zero out the negative
     // frequencies (leaving the boundary frequencies at 1).
-    for (size_t i = 1; i < ws.size()/2; ++i) {
+    for (size_t i = 1; i < ws.size() / 2; ++i) {
         ws[i] *= 2;
     }
-    for (size_t i = ws.size()/2 + 1; i < ws.size(); ++i) {
+    for (size_t i = ws.size() / 2 + 1; i < ws.size(); ++i) {
         ws[i] = 0;
     }
 
@@ -517,7 +565,6 @@ analytic_representation(const Ys& ys) {
 
     return std::move(result);
 }
-
 
 //
 // Calculate the derivative of a time series using finite differences.  The
@@ -529,26 +576,23 @@ analytic_representation(const Ys& ys) {
 // 3/4 pi radians and -3/4 pi radians may be 1/2 pi radians (and not -6/4 pi
 // radians).
 //
-template <typename Ys, typename T=typename Ys::value_type,
-         typename Diff = std::minus<T>>
-std::vector<T>
-derivative(const Ys& ys, Diff diff = Diff{}) {
+template <typename Ys, typename T = typename Ys::value_type, typename Diff = std::minus<T>>
+std::vector<T> derivative(const Ys& ys, Diff diff = Diff{}) {
     std::vector<T> result;
     result.reserve(ys.size());
 
     result.push_back(diff(ys[1], ys[0]));
-    for (size_t i = 1; i < ys.size() - 1; ++ i) {
+    for (size_t i = 1; i < ys.size() - 1; ++i) {
         // note: the ys[i] terms will cancel out with the standard definition
         // of diff, but are important for some definitions of diff (e.g. when
         // calculating angular velocities for a sequence like
         // (pi/3, pi, -pi/3).)
-        result.push_back((diff(ys[i + 1],ys[i]) + diff(ys[i], ys[i - 1]))/2);
+        result.push_back((diff(ys[i + 1], ys[i]) + diff(ys[i], ys[i - 1])) / 2);
     }
     result.push_back(diff(ys[ys.size() - 1], ys[ys.size() - 2]));
 
     return std::move(result);
 }
-
 
 //
 // calculate the closest difference between two values on a cyclic system,
@@ -559,51 +603,46 @@ derivative(const Ys& ys, Diff diff = Diff{}) {
 // is also 1/2 pi radians.
 //
 template <class T>
-std::function<T (T, T)>
-cyclic_difference(T cycle_size){
+std::function<T(T, T)> cyclic_difference(T cycle_size) {
     return [cycle_size](T a, T b) {
         T t = a - b;
-        if (t > cycle_size/2)
+        if (t > cycle_size / 2)
             return t - cycle_size;
-        else if (t < -cycle_size/2)
+        else if (t < -cycle_size / 2)
             return t + cycle_size;
         else
             return t;
     };
 }
 
-
 //
 // Calculate the instantaneous frequency and amplitude of a signal using the
 // Hilbert transform.  Note that this is only well defined for signals that
 // have a relatively low bandwidth at a given moment in time.
 //
-template <typename Ys, typename T=typename Ys::value_type>
-std::pair<std::vector<T>, std::vector<T>>
-instantaneous_frequency_and_amplitude(const Ys& ys) {
-    const T pi = 2*std::arg(std::complex<T>(0., 1.));
+template <typename Ys, typename T = typename Ys::value_type>
+std::pair<std::vector<T>, std::vector<T>> instantaneous_frequency_and_amplitude(const Ys& ys) {
+    const T pi = 2 * std::arg(std::complex<T>(0., 1.));
     auto zs = analytic_representation(ys);
 
     std::vector<T> angle;
-    std::transform(zs.begin(), zs.end(), std::back_inserter(angle),
-        [](std::complex<double> z) { return std::arg(z); });
+    std::transform(zs.begin(), zs.end(), std::back_inserter(angle), [](std::complex<double> z) {
+        return std::arg(z);
+    });
 
     std::vector<T> amplitude;
-    std::transform(zs.begin(), zs.end(), std::back_inserter(amplitude),
-        [](std::complex<double> z) { return std::abs(z); });
+    std::transform(zs.begin(), zs.end(), std::back_inserter(amplitude), [](std::complex<double> z) {
+        return std::abs(z);
+    });
 
     // calculate the frequency from the angular velocity
-    auto frequency = derivative(angle, cyclic_difference(2*pi));
+    auto frequency = derivative(angle, cyclic_difference(2 * pi));
     for (auto& f : frequency) {
-        f /= 2*pi;
+        f /= 2 * pi;
     }
 
-    return std::pair<std::vector<T>, std::vector<T>>{
-        std::move(frequency), std::move(amplitude)
-    };
+    return std::pair<std::vector<T>, std::vector<T>>{std::move(frequency), std::move(amplitude)};
 }
-
-
 
 //
 // A 2 dimensional grid of bins with time on the x-axis, frequency on the
@@ -615,8 +654,7 @@ instantaneous_frequency_and_amplitude(const Ys& ys) {
 // IMFs from an EMD using their instantaneous frequency and amplitude.  The
 // result is similar to a spectrogram.
 //
-template<typename AmpType=double, typename FreqType=double,
-    typename RatioType=double>
+template <typename AmpType = double, typename FreqType = double, typename RatioType = double>
 class Binned_spectrum {
 public:
     // note: could hide the implementation, but it's not worth the
@@ -627,12 +665,15 @@ public:
     double y_bin_size;
     std::vector<std::vector<AmpType>> spectrum;
 
-
-    Binned_spectrum(size_t x_bins, size_t y_bins,
-            size_t points_per_x_bin, FreqType bandwidth_per_y_bin)
-        : num_x_bins(x_bins), num_y_bins(y_bins),
-            x_bin_size(points_per_x_bin), y_bin_size(bandwidth_per_y_bin)
-    {
+    Binned_spectrum(
+            size_t x_bins,
+            size_t y_bins,
+            size_t points_per_x_bin,
+            FreqType bandwidth_per_y_bin) :
+            num_x_bins(x_bins),
+            num_y_bins(y_bins),
+            x_bin_size(points_per_x_bin),
+            y_bin_size(bandwidth_per_y_bin) {
         spectrum.resize(num_x_bins);
         for (auto& timeslice : spectrum) {
             timeslice.resize(num_y_bins);
@@ -641,67 +682,61 @@ public:
 
     // add a given trace to the totals in the various bins.
     template <typename Frequencies, typename Amplitudes>
-    void add_trace(const Frequencies& frequencies,
-            const Amplitudes& amplitudes) {
+    void add_trace(const Frequencies& frequencies, const Amplitudes& amplitudes) {
         assert(frequencies.size() == amplitudes.size());
         assert(frequencies.size() <= num_x_bins * x_bin_size);
 
         for (size_t i = 1; i < frequencies.size(); ++i) {
-            FreqType y_start = frequencies[i-1];
+            FreqType y_start = frequencies[i - 1];
             FreqType y_end = frequencies[i];
-            AmpType amp_start = amplitudes[i-1];
+            AmpType amp_start = amplitudes[i - 1];
             AmpType amp_end = amplitudes[i];
-            size_t y_bin_start = std::max(size_t{0}, std::min(num_y_bins - 1,
-                static_cast<size_t>(y_start / y_bin_size)));
-            size_t y_bin_end = std::max(size_t{0}, std::min(num_y_bins - 1,
-                static_cast<size_t>(y_end / y_bin_size)));
+            size_t y_bin_start = std::max(
+                    size_t{0}, std::min(num_y_bins - 1, static_cast<size_t>(y_start / y_bin_size)));
+            size_t y_bin_end = std::max(
+                    size_t{0}, std::min(num_y_bins - 1, static_cast<size_t>(y_end / y_bin_size)));
 
             // easy case: starts and ends in same square
             if (y_bin_start == y_bin_end) {
-                spectrum[i/x_bin_size][y_bin_start] += (amp_start + amp_end)/2;
-            } else { // harder case: spans multiple squares
+                spectrum[i / x_bin_size][y_bin_start] += (amp_start + amp_end) / 2;
+            } else {  // harder case: spans multiple squares
                 FreqType dy = y_end - y_start;
                 FreqType length = fabs(y_end - y_start);
-                FreqType y_bottom = (dy > 0)  ? y_start : y_end;
-                FreqType y_top    = (dy <= 0) ? y_start : y_end;
-                AmpType amp_bottom = (dy > 0)  ? amp_start : amp_end;
-                AmpType amp_top    = (dy <= 0) ? amp_start : amp_end;
-                size_t y_bin_bottom = (dy > 0)  ? y_bin_start : y_bin_end;
-                size_t y_bin_top    = (dy <= 0) ? y_bin_start : y_bin_end;
+                FreqType y_bottom = (dy > 0) ? y_start : y_end;
+                FreqType y_top = (dy <= 0) ? y_start : y_end;
+                AmpType amp_bottom = (dy > 0) ? amp_start : amp_end;
+                AmpType amp_top = (dy <= 0) ? amp_start : amp_end;
+                size_t y_bin_bottom = (dy > 0) ? y_bin_start : y_bin_end;
+                size_t y_bin_top = (dy <= 0) ? y_bin_start : y_bin_end;
                 RatioType d_amp = (amp_top - amp_bottom) / RatioType(length);
 
                 // bottom square
-                FreqType length_bottom = y_bin_size * (y_bin_bottom + 1) -
-                    y_bottom;
-                RatioType mean_amp_bottom = length_bottom * d_amp/2 +
-                    amp_bottom;
-                spectrum[i/x_bin_size][y_bin_bottom] +=
-                    AmpType(mean_amp_bottom * length_bottom/length);
+                FreqType length_bottom = y_bin_size * (y_bin_bottom + 1) - y_bottom;
+                RatioType mean_amp_bottom = length_bottom * d_amp / 2 + amp_bottom;
+                spectrum[i / x_bin_size][y_bin_bottom] +=
+                        AmpType(mean_amp_bottom * length_bottom / length);
 
                 // middle squares
-                for (size_t bin = y_bin_bottom + 1; bin < y_bin_top;
-                        ++bin) {
-                    FreqType mid_length = length_bottom +
-                        (bin - y_bin_bottom) * y_bin_size - y_bin_size/2;
+                for (size_t bin = y_bin_bottom + 1; bin < y_bin_top; ++bin) {
+                    FreqType mid_length =
+                            length_bottom + (bin - y_bin_bottom) * y_bin_size - y_bin_size / 2;
                     RatioType mean_amp = (mid_length * d_amp + amp_bottom);
-                    spectrum[i/x_bin_size][bin] +=
-                        AmpType(mean_amp * y_bin_size/length);
+                    spectrum[i / x_bin_size][bin] += AmpType(mean_amp * y_bin_size / length);
                 }
 
                 // top square
                 FreqType length_top = y_top - y_bin_size * y_bin_top;
-                AmpType mean_amp_top = (-length_top * d_amp/2 + amp_top);
-                spectrum[i/x_bin_size][y_bin_top] +=
-                    AmpType(mean_amp_top * length_top/length);
+                AmpType mean_amp_top = (-length_top * d_amp / 2 + amp_top);
+                spectrum[i / x_bin_size][y_bin_top] += AmpType(mean_amp_top * length_top / length);
             }
         }
     }
 };
 
-template<typename AmpType=double, typename FreqType=double,
-    typename RatioType=double>
-std::ostream& operator << (std::ostream& os,
-        const Binned_spectrum<AmpType,FreqType,RatioType>& spectrum) {
+template <typename AmpType = double, typename FreqType = double, typename RatioType = double>
+std::ostream& operator<<(
+        std::ostream& os,
+        const Binned_spectrum<AmpType, FreqType, RatioType>& spectrum) {
     for (auto& timeslice : spectrum.spectrum) {
         bool first_column = true;
         for (double val : timeslice) {

@@ -1,0 +1,1 @@
+make && ./emd --run-tests
