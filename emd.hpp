@@ -262,41 +262,6 @@ std::vector<typename Ys::value_type> sift(const Xs& xs, const Ys& ys) {
 }
 
 //
-// Perform a single sifting pass of the empiric mode decomposition as
-// described by Huang et al 1998.  This is performed by fitting a cubic
-// spline through the local minima and maxima, then subtracting the mean of
-// these two cubic splines from the original data.
-//
-// If the data contain no local maxima or they contain no local minima, the
-// sifting process is aborted and an empty list is returned.
-//
-template <typename Xs, typename Ys>
-std::vector<typename Ys::value_type> sift_with_extrema(
-        const Xs& xs,
-        const Ys& ys,
-        const std::pair<std::vector<typename Xs::value_type>, std::vector<typename Ys::value_type>>&
-                maxima,
-        const std::pair<std::vector<typename Xs::value_type>, std::vector<typename Ys::value_type>>&
-                minima) {
-    std::vector<typename Ys::value_type> result;
-    if (maxima.first.size() < 4 || minima.first.size() < 4) {
-        // no extrema - can't sift.
-        return result;
-    }
-
-    result.reserve(ys.size());
-
-    auto upper_envelope = cubic_spline_interpolate(maxima.first, maxima.second, xs);
-    auto lower_envelope = cubic_spline_interpolate(minima.first, minima.second, xs);
-
-    for (size_t i = 0; i < upper_envelope.size(); ++i) {
-        result.push_back(ys[i] - (upper_envelope[i] + lower_envelope[i]) / 2);
-    }
-
-    return std::move(result);
-}
-
-//
 // Calculate the difference between two sifting passes.  This is intended to
 // match what is described in Huang et al 1998 equation 5.5.  It's not clear
 // that equation 5.5 is really what the author's intended, however.  The
@@ -324,15 +289,6 @@ typename T1::value_type sifting_difference(const T1& old_vals, const T2& new_val
     return sqrt(sum / old_vals.size());
 }
 
-template <typename Ys>
-typename Ys::value_type abs_sum(const Ys& ys) {
-    typename Ys::value_type sum = 0;
-    for (auto& v : ys) {
-        sum += std::abs(v);
-    }
-    return sum;
-}
-
 //
 // Calculate the empirical mode decomposition of a time series.
 //
@@ -352,35 +308,26 @@ std::vector<std::vector<typename Ys::value_type>> empirical_mode_decomposition(
     residual.assign(begin(ys), end(ys));
 
     while (true) {
-        // iterate the sifting process until we reach a stopping condition
-        size_t num_siftings = 0;
-        Imf imf = residual;
+        auto sifted = sift(xs, residual);
 
-        auto sum = abs_sum(imf);
-        // printf("cur imf abs_sum: %f\n", sum);
-        if (sum < 1e-8) {
-            // can't sift anymore
+        // stop when we can't sift any more
+        if (sifted.size() == 0) {
             break;
         }
 
-        while ((max_siftings == 0) || (num_siftings < max_siftings)) {
-            auto maxima = find_local_maxima(xs, imf);
-            auto minima = find_local_maxima(xs, imf, std::less<typename Ys::value_type>{});
-            // printf("max: %d min: %d\n", maxima.first.size(), minima.first.size());
-            if (maxima.first.size() < 4 || minima.first.size() < 4) {
-                // can't fit splines
-                break;
-            }
-
-            auto sifted = sift_with_extrema(xs, imf, maxima, minima);
-            if (sifting_difference(imf, sifted) < 0.02) {
-                break;
-            }
-
+        // iterate the sifting process until we reach a stopping condition
+        size_t num_siftings = 0;
+        Imf imf{residual};
+        // std::cout << "  computing IMF " << result.size() + 1 << std::flush;
+        while ((max_siftings == 0 || num_siftings < max_siftings) && sifted.size() > 0 &&
+               sifting_difference(imf, sifted) > 0.2) {
             ++num_siftings;
-
+            // std::cout << "." << std::flush;
             imf = std::move(sifted);
+            sifted = sift(xs, imf);
         }
+        // std::cout << "\n";
+
         // subtract out the imf from the residual
         for (size_t i = 0; i < residual.size(); ++i) {
             residual[i] -= imf[i];
@@ -389,6 +336,7 @@ std::vector<std::vector<typename Ys::value_type>> empirical_mode_decomposition(
         result.push_back(imf);
     }
 
+    result.push_back(residual);
     return std::move(result);
 }
 
@@ -678,11 +626,11 @@ public:
             size_t x_bins,
             size_t y_bins,
             size_t points_per_x_bin,
-            FreqType bandwidth_per_y_bin) :
-            num_x_bins(x_bins),
-            num_y_bins(y_bins),
-            x_bin_size(points_per_x_bin),
-            y_bin_size(bandwidth_per_y_bin) {
+            FreqType bandwidth_per_y_bin)
+            : num_x_bins(x_bins),
+              num_y_bins(y_bins),
+              x_bin_size(points_per_x_bin),
+              y_bin_size(bandwidth_per_y_bin) {
         spectrum.resize(num_x_bins);
         for (auto& timeslice : spectrum) {
             timeslice.resize(num_y_bins);
